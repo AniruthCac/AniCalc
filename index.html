@@ -1,0 +1,483 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anicalc Web App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div id="mainSection" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Anicalc</h1>
+        <div class="space-y-4">
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">Name:</label>
+                <input id="nameInput" type="text" class="w-2/3 p-2 border rounded" placeholder="Enter Patient Name">
+            </div>
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">Age (years):</label>
+                <input id="ageInput" type="number" class="w-2/3 p-2 border rounded" placeholder="Enter Age (years)">
+            </div>
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">Age (months):</label>
+                <input id="ageMonthsInput" type="number" class="w-2/3 p-2 border rounded" placeholder="Enter Age (months, if < 1 year)">
+            </div>
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">Height (cm):</label>
+                <input id="heightInput" type="number" step="0.1" class="w-2/3 p-2 border rounded" placeholder="Enter Height (cm)">
+            </div>
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">Weight (kg):</label>
+                <input id="weightInput" type="number" step="0.1" class="w-2/3 p-2 border rounded" placeholder="Enter Weight (kg)">
+            </div>
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">Gender:</label>
+                <div class="w-2/3">
+                    <label><input type="radio" name="gender" value="Male" checked> Male</label>
+                    <label class="ml-4"><input type="radio" name="gender" value="Female"> Female</label>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">NPO since (hours):</label>
+                <input id="npoInput" type="number" class="w-2/3 p-2 border rounded" placeholder="NPO Since (hours)" value="10">
+            </div>
+            <div class="flex items-center">
+                <label class="w-1/3 text-lg">Hb (g/dL):</label>
+                <input id="hbInput" type="number" step="0.1" class="w-2/3 p-2 border rounded" placeholder="Patient Hb (g/dL)">
+            </div>
+            <button onclick="calculate()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Calculate</button>
+            <button onclick="showSection('evidenceSection')" class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Evidence</button>
+        </div>
+    </div>
+
+    <div id="resultSection" class="hidden max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Results</h1>
+        <button onclick="showSection('cardiacSection')" class="float-right bg-green-500 text-white p-2 rounded hover:bg-green-600">Cardiac</button>
+        <div id="resultContainer" class="space-y-2"></div>
+        <button onclick="showSection('mainSection')" class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Back</button>
+    </div>
+
+    <div id="cardiacSection" class="hidden max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Cardiac Calculations</h1>
+        <div id="cardiacContainer" class="space-y-2"></div>
+        <button onclick="showSection('resultSection')" class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Back</button>
+    </div>
+
+    <div id="evidenceSection" class="hidden max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Evidence and Calculations</h1>
+        <div id="evidenceContainer" class="space-y-2">
+            <h2 class="text-xl font-semibold mt-4">Results Page Calculations</h2>
+            <p><strong>Lean Body Weight (LBW):</strong> Janmahasatian Formula</p>
+            <p><strong>Ideal Body Weight (IBW):</strong> Brocas Formula</p>
+            <p><strong>Adjusted Body Weight (ABW):</strong> ABW = IBW + 0.4 * (Actual Weight - IBW)</p>
+            <p><strong>Weight Range, Blade, CVL, NGT, Foley, Vital Signs, ETT Size & Depth:</strong> Based on age-specific ranges from 'The Harriet Lane Handbook The Johns Hopkins Hospital'</p>
+            <p><strong>LMA Size:</strong> Based on weight ranges:<br>2-5 kg: 1<br>5-12 kg: 1.5<br>10-25 kg: 2<br>25-35 kg: 2.5<br>30-60 kg: 3<br>50-90 kg: 4<br>>90 kg: 5</p>
+            <p><strong>Tidal Volume:</strong> 6 mL/kg based on Lean Body Weight</p>
+            <p><strong>General Anesthesia Doses:</strong><br>Propofol: 2 mg/kg (LBW)<br>Fentanyl: 2 mcg/kg (LBW)<br>Atracurium: 0.5 mg/kg (LBW)<br>Vecuronium: 0.1 mg/kg (LBW)<br>Rocuronium: 0.6 mg/kg (LBW)<br>Paracetamol: 15 mg/kg (LBW)<br>Neostigmine: 0.05 mg/kg (ABW)<br>Sugammadex: 2 mg/kg (ABW)</p>
+            <p><strong>Maintenance Fluid Rate:</strong> Holliday-Segar method:<br>First 10 kg: 4 mL/kg/h<br>Next 10 kg: 2 mL/kg/h<br>Remaining kg: 1 mL/kg/h</p>
+            <p><strong>Fluid Rate (1st Hour):</strong> NPO deficit: NPO hours * Maintenance Fluid Rate<br>First hour: NPO deficit / 2</p>
+            <p><strong>Fluid Rate (2nd-3rd Hours):</strong> Remaining NPO deficit / 2</p>
+            <p><strong>MABL (Maximum Allowable Blood Loss):</strong><br>MABL = EBV * (Starting Hb - Target Hb) / Starting Hb<br>EBV (Estimated Blood Volume):<br>Newborn: 85 mL/kg<br>Infant: 80 mL/kg<br>Child: 75 mL/kg<br>Adult: 70 mL/kg</p>
+            <h2 class="text-xl font-semibold mt-4">Cardiac Page Calculations</h2>
+            <p><strong>BMI:</strong> Weight (kg) / (Height (m))^2<br>Height (m) = Height (cm) / 100</p>
+            <p><strong>BSA (Body Surface Area):</strong> Mosteller Formula: sqrt((Height (cm) * Weight (kg)) / 3600)</p>
+            <p><strong>Vaso-actives Doses:</strong><br>Infusion rate: (Weight * 3 / 40) mL/h<br>Atropine: 0.015 mg/kg<br>Glyco: 0.01 mg/kg<br>ADR: 0.01 mg/kg</p>
+            <p><strong>Induction Agents Doses:</strong><br>Propofol: 2 mg/kg<br>Ketamine: 2 mg/kg<br>Etomidate: 0.2 mg/kg<br>Thiopentone: 4 mg/kg<br>Midazolam: 0.1 mg/kg<br>Atracurium: 0.5 mg/kg<br>Vecuronium: 0.1 mg/kg<br>Rocuronium: 0.6 mg/kg</p>
+            <p><strong>Miscellaneous Doses:</strong><br>Heparin: 4 mg/kg<br>Lignocaine: 1.5 mg/kg<br>EACA: 100 mg/kg<br>TXA: 10 mg/kg<br>Morphine: 0.1 mg/kg<br>Neostigmine: 0.05 mg/kg<br>Dexa: 0.1 mg/kg<br>Hydrocort: 2 mg/kg<br>Methylpred: 30 mg/kg</p>
+            <p><strong>Cardioplegia Volume:</strong> If weight < 10 kg: 30 mL/kg<br>Else: 20 mL/kg</p>
+            <p><strong>Cardioplegia Flow Rates:</strong><br>37°C: 2.4 * BSA mL/min<br>32°C: 2.1 * BSA mL/min<br>28°C: 1.8 * BSA mL/min<br>25°C: 1.2 * BSA mL/min<br>15°C: 0.6 * BSA mL/min</p>
+        </div>
+        <button onclick="showSection('mainSection')" class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Back</button>
+    </div>
+
+    <script>
+        // Patient class ported from Patient.java
+        class Patient {
+            constructor(name, age, ageMonths, height, weight, gender, npoHours, hb) {
+                this.name = name;
+                this.age = age;
+                this.ageMonths = ageMonths;
+                this.height = height;
+                this.weight = weight;
+                this.gender = gender;
+                this.npoHours = npoHours;
+                this.hb = hb;
+            }
+
+            getPatientInfo() {
+                return `Name: ${this.name}, Age: ${this.age === 0 ? this.ageMonths + " months" : this.age + " years"}, Gender: ${this.gender}`;
+            }
+
+            getLBW() {
+                if (this.age < 18 && this.height <= 150) return this.weight;
+                const heightInMeters = this.height / 100;
+                const bmi = this.weight / (heightInMeters * heightInMeters);
+                return this.gender === "Male" ? 
+                    (9270 * this.weight) / (6680 + 216 * bmi) : 
+                    (9270 * this.weight) / (8780 + 244 * bmi);
+            }
+
+            getLBWInfo() {
+                return `Lean Body Weight: ${this.getLBW().toFixed(1)} kg`;
+            }
+
+            getIBW() {
+                if (this.age < 18 && this.height <= 150) return this.weight;
+                return this.gender === "Male" ? this.height - 100 : this.height - 105;
+            }
+
+            getIBWInfo() {
+                return `Ideal Body Weight: ${this.getIBW().toFixed(1)} kg`;
+            }
+
+            getABW() {
+                if (this.age < 18 && this.height <= 150) return this.weight;
+                const ibw = this.getIBW();
+                return ibw + 0.4 * (this.weight - ibw);
+            }
+
+            getABWInfo() {
+                return `Adjusted Body Weight: ${this.getABW().toFixed(1)} kg`;
+            }
+
+            getTidalVolume() {
+                return 6 * this.getLBW();
+            }
+
+            getMaintenanceFluidRate() {
+                let rate = 0;
+                if (this.weight <= 10) rate = 4 * this.weight;
+                else if (this.weight <= 20) rate = 40 + 2 * (this.weight - 10);
+                else rate = 60 + 1 * (this.weight - 20);
+                return rate;
+            }
+
+            getFluidRateFirstHour() {
+                const deficit = this.npoHours * this.getMaintenanceFluidRate();
+                return deficit / 2;
+            }
+
+            getFluidRateTwoThreeHours() {
+                const deficit = this.npoHours * this.getMaintenanceFluidRate();
+                return (deficit - this.getFluidRateFirstHour()) / 2;
+            }
+
+            getMABL(targetHb) {
+                let ebv;
+                if (this.age === 0 && this.ageMonths <= 1) ebv = 85;
+                else if (this.age < 1) ebv = 80;
+                else if (this.age < 12) ebv = 75;
+                else ebv = 70;
+                ebv = ebv * this.weight;
+                return ebv * (this.hb - targetHb) / this.hb;
+            }
+        }
+
+        // AgeRangeData ported from ResultActivity
+        const ageRangeDataMap = {
+            0: { weightRange: "Newborn: 3.5-4 kg", blade: "Miller 0", cvl: "3-4 Fr", ngt: "5-8 Fr", foley: "8 Fr",
+                 vitalSignsHR: "HR: 120-170 bpm", vitalSignsBP: "BP: 55-75/35-45 mmHg", vitalSignsRR: "RR: 40-70 bpm",
+                 ettInfo: "Uncuffed ETT: 3.0-3.5, Depth: 10.5 cm" },
+            3: { weightRange: "6 mo: 6-8 kg", blade: "Miller 1", cvl: "4-5 Fr", ngt: "8 Fr", foley: "8 Fr",
+                 vitalSignsHR: "HR: 100-150 bpm", vitalSignsBP: "BP: 70-90/50-65 mmHg", vitalSignsRR: "RR: 30-45 bpm",
+                 ettInfo: "Uncuffed ETT: 3.5-4.0, Depth: 12.0 cm" },
+            10: { weightRange: "1 yr: 10 kg", blade: "Miller 1, Mac 2", cvl: "4-5 Fr", ngt: "10 Fr", foley: "8 Fr",
+                  vitalSignsHR: "HR: 90-130 bpm", vitalSignsBP: "BP: 80-100/55-65 mmHg", vitalSignsRR: "RR: 25-40 bpm",
+                  ettInfo: "Cuffed ETT: 4.0, Depth: 12.0 cm" },
+            1: { weightRange: "1 yr: 10 kg", blade: "Miller 1, Mac 2", cvl: "4-5 Fr", ngt: "10 Fr", foley: "8 Fr",
+                 vitalSignsHR: "HR: 80-125 bpm", vitalSignsBP: "BP: 90-105/55-70 mmHg", vitalSignsRR: "RR: 20-30 bpm",
+                 ettInfo: "Cuffed ETT: 4.0, Depth: 12.0 cm" },
+            2: { weightRange: "2-3 yr: 13-16 kg", blade: "Miller 1, Mac 2", cvl: "5 Fr", ngt: "10-12 Fr", foley: "8 Fr",
+                 vitalSignsHR: "HR: 80-125 bpm", vitalSignsBP: "BP: 90-105/55-70 mmHg", vitalSignsRR: "RR: 20-30 bpm",
+                 ettInfo: "Cuffed ETT: 4.5, Depth: 13.5 cm" },
+            4: { weightRange: "4-6 yr: 20-25 kg", blade: "Mac 3", cvl: "5 Fr", ngt: "12-14 Fr", foley: "8 Fr",
+                 vitalSignsHR: "HR: 70-115 bpm", vitalSignsBP: "BP: 95-110/60-75 mmHg", vitalSignsRR: "RR: 20-25 bpm",
+                 ettInfo: "Cuffed ETT: 5.0, Depth: 15.0 cm" },
+            7: { weightRange: "7-10 yr: 25-35 kg", blade: "Mac 3", cvl: "7 Fr", ngt: "12-14 Fr", foley: "8 Fr",
+                 vitalSignsHR: "HR: 60-100 bpm", vitalSignsBP: "BP: 100-120/60-75 mmHg", vitalSignsRR: "RR: 14-22 bpm",
+                 ettInfo: "Cuffed ETT: 5.5, Depth: 16.5 cm" },
+            11: { weightRange: "11-15 yr: 40-50 kg", blade: "Mac 3", cvl: "7 Fr", ngt: "14-18 Fr", foley: "10 Fr",
+                  vitalSignsHR: "HR: 60-100 bpm", vitalSignsBP: "BP: 100-120/60-75 mmHg", vitalSignsRR: "RR: 12-18 bpm",
+                  ettInfo: "Cuffed ETT: 6.0, Depth: 18.0 cm" },
+            16: { weightRange: ">16 yr: >50 kg", blade: "Mac 3", cvl: "7 Fr", ngt: "14-18 Fr", foley: "12 Fr",
+                  vitalSignsHR: "HR: 60-100 bpm", vitalSignsBP: "BP: 100-120/70-80 mmHg", vitalSignsRR: "RR: 12-18 bpm",
+                  ettInfo: "Cuffed ETT: 7.0-8.0, Depth: 21.0-24.0 cm" },
+            18: { weightRange: "", blade: "Mac 3", cvl: "7 Fr", ngt: "14-18 Fr", foley: "12 Fr",
+                  vitalSignsHR: "HR: 60-100 bpm", vitalSignsBP: "BP: 100-120/70-80 mmHg", vitalSignsRR: "RR: 12-18 bpm",
+                  ettInfo: "Cuffed ETT: 7.0-8.5, Depth: 20-24 cm" }
+        };
+
+        function getAgeRangeData(age, ageMonths, gender) {
+            if (age === 0) {
+                if (ageMonths <= 2) return ageRangeDataMap[0];
+                else if (ageMonths <= 9) return ageRangeDataMap[3];
+                else if (ageMonths <= 11) return ageRangeDataMap[10];
+                else return { weightRange: "Invalid age months", blade: "N/A", cvl: "N/A", ngt: "N/A", foley: "N/A",
+                             vitalSignsHR: "N/A", vitalSignsBP: "N/A", vitalSignsRR: "N/A", ettInfo: "N/A" };
+            } else if (age === 1) return ageRangeDataMap[1];
+            else if (age < 4) return ageRangeDataMap[2];
+            else if (age < 7) return ageRangeDataMap[4];
+            else if (age < 11) return ageRangeDataMap[7];
+            else if (age < 16) return ageRangeDataMap[11];
+            else if (age > 17) {
+                const baseData = ageRangeDataMap[18];
+                return {
+                    weightRange: baseData.weightRange,
+                    blade: gender === "Female" ? "Mac 3" : "Mac 4",
+                    cvl: baseData.cvl,
+                    ngt: baseData.ngt,
+                    foley: baseData.foley,
+                    vitalSignsHR: baseData.vitalSignsHR,
+                    vitalSignsBP: baseData.vitalSignsBP,
+                    vitalSignsRR: baseData.vitalSignsRR,
+                    ettInfo: gender === "Female" ? "Cuffed ETT: 7.0-7.5, Depth: 20-22 cm" : "Cuffed ETT: 8.0-8.5, Depth: 22-24 cm"
+                };
+            } else return ageRangeDataMap[16];
+        }
+
+        function getLMASizeByWeight(weight) {
+            if (weight >= 2 && weight <= 5) return "1";
+            else if (weight > 5 && weight <= 12) return "1.5";
+            else if (weight > 10 && weight <= 25) return "2";
+            else if (weight > 25 && weight <= 35) return "2.5";
+            else if (weight > 30 && weight <= 60) return "3";
+            else if (weight > 50 && weight <= 90) return "4";
+            else if (weight > 90) return "5";
+            else return "N/A";
+        }
+
+        function getAorticCannula(weight) {
+            if (weight <= 4.5) return "8 Fr";
+            else if (weight <= 6) return "10 Fr";
+            else if (weight <= 10) return "12 Fr";
+            else if (weight <= 16) return "14 Fr";
+            else if (weight <= 25) return "16 Fr";
+            else if (weight <= 35) return "18 Fr";
+            else if (weight <= 50) return "20 Fr";
+            else if (weight <= 80) return "22 Fr";
+            else return "24 Fr";
+        }
+
+        function getAngleCannula(weight) {
+            if (weight <= 4.5) return "12/14 Fr";
+            else if (weight <= 6) return "14/16 Fr";
+            else if (weight <= 10) return "16/18 Fr";
+            else if (weight <= 16) return "18/20 Fr";
+            else if (weight <= 25) return "18/22 Fr";
+            else if (weight <= 35) return "20/24 Fr";
+            else if (weight <= 50) return "24/28 Fr";
+            else if (weight <= 80) return "28/30 Fr";
+            else return "24 Fr";
+        }
+
+        function getStraightCannula(weight) {
+            if (weight <= 4.5) return "16/18 Fr";
+            else if (weight <= 6) return "18/20 Fr";
+            else if (weight <= 10) return "20/22 Fr";
+            else if (weight <= 16) return "22/24 Fr";
+            else if (weight <= 25) return "24/26 Fr";
+            else if (weight <= 35) return "26/30 Fr";
+            else if (weight <= 50) return "28/32 Fr";
+            else if (weight <= 80) return "30/34 Fr";
+            else return "32/36 Fr";
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('div[id$="Section"]').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        function addResultRow(container, label, value) {
+            const row = document.createElement('div');
+            row.className = 'flex justify-between';
+            row.innerHTML = `<span class="text-lg">${label}:</span><span class="text-lg">${value}</span>`;
+            container.appendChild(row);
+        }
+
+        function addTable(container, header, drugs) {
+            const tableHeader = document.createElement('h2');
+            tableHeader.className = 'text-xl font-semibold mt-4 text-center';
+            tableHeader.textContent = header;
+            container.appendChild(tableHeader);
+
+            const table = document.createElement('table');
+            table.innerHTML = `<tr><th>Drug</th><th>Dose</th></tr>`;
+            drugs.forEach(([drug, dose]) => {
+                table.innerHTML += `<tr><td>${drug}</td><td>${dose}</td></tr>`;
+            });
+            container.appendChild(table);
+        }
+
+        function calculate() {
+            const name = document.getElementById('nameInput').value || "Unknown";
+            const age = parseInt(document.getElementById('ageInput').value) || 0;
+            const ageMonths = parseInt(document.getElementById('ageMonthsInput').value) || 0;
+            const height = parseFloat(document.getElementById('heightInput').value) || 0;
+            const weight = parseFloat(document.getElementById('weightInput').value) || 0;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const npoHours = parseInt(document.getElementById('npoInput').value) || 10;
+            const hb = parseFloat(document.getElementById('hbInput').value) || 7.0;
+
+            const patient = new Patient(name, age, ageMonths, height, weight, gender, npoHours, hb);
+            const data = getAgeRangeData(age, ageMonths, gender);
+
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = '';
+            patient.getPatientInfo().split(', ').forEach(part => addResultRow(resultContainer, part.split(': ')[0], part.split(': ')[1]));
+            addResultRow(resultContainer, 'LBW', patient.getLBWInfo().replace('Lean Body Weight: ', '').replace(' kg', ''));
+            addResultRow(resultContainer, 'IBW', patient.getIBWInfo().replace('Ideal Body Weight: ', '').replace(' kg', ''));
+            addResultRow(resultContainer, 'ABW', patient.getABWInfo().replace('Adjusted Body Weight: ', '').replace(' kg', ''));
+            addResultRow(resultContainer, 'Weight Range', data.weightRange);
+            addResultRow(resultContainer, 'Blade', data.blade);
+            addResultRow(resultContainer, 'LMA', getLMASizeByWeight(weight));
+            addResultRow(resultContainer, 'ETT Size & Depth', data.ettInfo);
+            addResultRow(resultContainer, 'CVL (Fr)', data.cvl);
+            addResultRow(resultContainer, 'NGT (Fr)', data.ngt);
+            addResultRow(resultContainer, 'Foley (Fr)', data.foley);
+            addResultRow(resultContainer, 'Heart Rate', data.vitalSignsHR);
+            addResultRow(resultContainer, 'Blood Pressure', data.vitalSignsBP);
+            addResultRow(resultContainer, 'Respiratory Rate', data.vitalSignsRR);
+            addResultRow(resultContainer, 'Tidal Volume', patient.getTidalVolume().toFixed(1) + ' mL');
+
+            addTable(resultContainer, 'General Anesthesia', [
+                ['Propofol', (2 * patient.getLBW()).toFixed(1) + ' mg'],
+                ['Fentanyl', (2 * patient.getLBW()).toFixed(1) + ' mcg'],
+                ['Atracurium', (0.5 * patient.getLBW()).toFixed(1) + ' mg'],
+                ['Vecuronium', (0.1 * patient.getLBW()).toFixed(1) + ' mg'],
+                ['Rocuronium(0.6)', (0.6 * patient.getLBW()).toFixed(1) + ' mg'],
+                ['Paracetamol', (15 * patient.getLBW()).toFixed(1) + ' mg'],
+                ['Neostigmine', (0.05 * patient.getABW()).toFixed(1) + ' mg'],
+                ['Sugammadex(2)', (2 * patient.getABW()).toFixed(1) + ' mg']
+            ]);
+
+            addResultRow(resultContainer, 'Maintenance Fluid Rate', patient.getMaintenanceFluidRate().toFixed(1) + ' mL/h');
+            addResultRow(resultContainer, 'Fluid Rate (1st h)', patient.getFluidRateFirstHour().toFixed(1) + ' mL');
+            addResultRow(resultContainer, 'Fluid Rate (2-3 h)', patient.getFluidRateTwoThreeHours().toFixed(1) + ' mL');
+            addResultRow(resultContainer, 'MABL(8.0)', patient.getMABL(8.0).toFixed(1) + ' mL');
+            addResultRow(resultContainer, 'MABL(6.0)', patient.getMABL(6.0).toFixed(1) + ' mL');
+
+            showSection('resultSection');
+        }
+
+        function showCardiac() {
+            const name = document.getElementById('nameInput').value || "Unknown";
+            const age = parseInt(document.getElementById('ageInput').value) || 0;
+            const ageMonths = parseInt(document.getElementById('ageMonthsInput').value) || 0;
+            const height = parseFloat(document.getElementById('heightInput').value) || 0;
+            const weight = parseFloat(document.getElementById('weightInput').value) || 0;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+
+            const heightInMeters = height / 100;
+            const bmi = weight / (heightInMeters * heightInMeters);
+            const bsa = Math.sqrt((height * weight) / 3600);
+
+            const cardiacContainer = document.getElementById('cardiacContainer');
+            cardiacContainer.innerHTML = '';
+            addResultRow(cardiacContainer, 'Name', name);
+            addResultRow(cardiacContainer, 'Age', age === 0 ? ageMonths + ' months' : age + ' years');
+            addResultRow(cardiacContainer, 'Height', height.toFixed(1) + ' cm');
+            addResultRow(cardiacContainer, 'Weight', weight.toFixed(1) + ' kg');
+            addResultRow(cardiacContainer, 'BMI', bmi.toFixed(1) + ' kg/m²');
+            addResultRow(cardiacContainer, 'BSA', bsa.toFixed(2) + ' m²');
+
+            addTable(cardiacContainer, 'Vaso-actives', [
+                ['Infusion rate', ((weight * 3 / 40)).toFixed(1) + ' mL/h'],
+                ['applicable for NORAD 0.05, ADR 0.05, NTG 0.5 & DOBUT 5 mcg/kg/min', ''],
+                ['Atropine(15)', (0.015 * weight).toFixed(1) + ' mg'],
+                ['Glyco(10)', (0.01 * weight).toFixed(1) + ' mg'],
+                ['ADR(10)', (0.01 * weight).toFixed(1) + ' mg']
+            ]);
+
+            addTable(cardiacContainer, 'Induction Agents', [
+                ['Propofol(2)', (2 * weight).toFixed(1) + ' mg'],
+                ['Ketamine(2)', (2 * weight).toFixed(1) + ' mg'],
+                ['Etomidate(0.2)', (0.2 * weight).toFixed(1) + ' mg'],
+                ['Thiopentone(4)', (4 * weight).toFixed(1) + ' mg'],
+                ['Midazolam(0.1)', (0.1 * weight).toFixed(1) + ' mg'],
+                ['Atracurium(0.5)', (0.5 * weight).toFixed(1) + ' mg'],
+                ['Vecuronium(0.1)', (0.1 * weight).toFixed(1) + ' mg'],
+                ['Rocuronium(0.6)', (0.6 * weight).toFixed(1) + ' mg']
+            ]);
+
+            addTable(cardiacContainer, 'Miscellaneous', [
+                ['Heparin(4)', (4 * weight).toFixed(1) + ' mg'],
+                ['Lignocaine(1.5)', (1.5 * weight).toFixed(1) + ' mg'],
+                ['EACA(100)', (100 * weight).toFixed(1) + ' mg'],
+                ['TXA(10)', (10 * weight).toFixed(1) + ' mg'],
+                ['Morphine(0.1)', (0.1 * weight).toFixed(1) + ' mg'],
+                ['Neostigmine(0.05)', (0.05 * weight).toFixed(1) + ' mg'],
+                ['Dexa(0.1)', (0.1 * weight).toFixed(1) + ' mg'],
+                ['Hydrocort(2)', (2 * weight).toFixed(1) + ' mg'],
+                ['Methylpred(30)', (30 * weight).toFixed(1) + ' mg']
+            ]);
+
+            const cpbHeader = document.createElement('h2');
+            cpbHeader.className = 'text-xl font-semibold mt-4 text-center';
+            cpbHeader.textContent = 'CPB Calculations';
+            cardiacContainer.appendChild(cpbHeader);
+
+            addResultRow(cardiacContainer, 'Cardioplegia Volume', (weight < 10 ? 30 * weight : 20 * weight).toFixed(1) + ' mL');
+            addResultRow(cardiacContainer, 'CPB Flow Rate (37°C)', (2.4 * bsa).toFixed(1) + ' L/min');
+            addResultRow(cardiacContainer, 'CPB Flow Rate (32°C)', (2.1 * bsa).toFixed(1) + ' L/min');
+            addResultRow(cardiacContainer, 'CPB Flow Rate (28°C)', (1.8 * bsa).toFixed(1) + ' L/min');
+            addResultRow(cardiacContainer, 'CPB Flow Rate (25°C)', (1.2 * bsa).toFixed(1) + ' L/min');
+            addResultRow(cardiacContainer, 'CPB Flow Rate (15°C)', (0.6 * bsa).toFixed(1) + ' L/min');
+            addResultRow(cardiacContainer, 'Aortic Cannula', getAorticCannula(weight));
+            addResultRow(cardiacContainer, 'Angle Cannula', getAngleCannula(weight));
+            addResultRow(cardiacContainer, 'Straight Cannula', getStraightCannula(weight));
+
+            showSection('cardiacSection');
+        }
+
+        document.getElementById('cardiacSection').querySelector('button').addEventListener('click', () => showSection('resultSection'));
+        document.getElementById('resultSection').querySelector('button.bg-green-500').addEventListener('click', showCardiac);
+    </script>
+</body>
+</html>
