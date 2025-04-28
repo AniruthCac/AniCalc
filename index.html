@@ -410,14 +410,14 @@
             addResultRow(resultContainer, 'Tidal Volume', patient.getTidalVolume());
 
             addTable(resultContainer, 'General Anesthesia', [
-                ['Propofol', (2 * patient.getLBW()).toFixed(1) + ' mg'],
-                ['Fentanyl', (2 * patient.getLBW()).toFixed(1) + ' mcg'],
+                ['Propofol', (2 * patient.getLBW()).toFixed(0) + ' mg'],
+                ['Fentanyl', (2 * patient.getLBW()).toFixed(0) + ' mcg'],
                 ['Atracurium', (0.5 * patient.getLBW()).toFixed(1) + ' mg'],
                 ['Vecuronium', (0.1 * patient.getLBW()).toFixed(1) + ' mg'],
                 ['Rocuronium(0.6)', (0.6 * patient.getLBW()).toFixed(1) + ' mg'],
-                ['Paracetamol', (15 * patient.getLBW()) + ' mg'],
+                ['Paracetamol', (15 * patient.getLBW()).toFixed(0) + ' mg'],
                 ['Neostigmine', (0.05 * patient.getABW()).toFixed(2) + ' mg'],
-                ['Sugammadex(2)', (2 * patient.getABW()).toFixed(1) + ' mg']
+                ['Sugammadex(2)', (2 * patient.getABW()).toFixed(0) + ' mg']
             ]);
 
             addResultRow(resultContainer, 'Maintenance Fluid Rate', patient.getMaintenanceFluidRate().toFixed(1) + ' mL/h');
@@ -459,10 +459,10 @@
             ]);
 
             addTable(cardiacContainer, 'Induction Agents', [
-                ['Propofol(2)', (2 * weight).toFixed(1) + ' mg'],
-                ['Ketamine(2)', (2 * weight).toFixed(1) + ' mg'],
+                ['Propofol(2)', (2 * weight).toFixed(0) + ' mg'],
+                ['Ketamine(2)', (2 * weight).toFixed(0) + ' mg'],
                 ['Etomidate(0.2)', (0.2 * weight).toFixed(1) + ' mg'],
-                ['Thiopentone(4)', (4 * weight).toFixed(1) + ' mg'],
+                ['Thiopentone(4)', (4 * weight).toFixed(0) + ' mg'],
                 ['Midazolam(0.05)', (0.05 * weight).toFixed(2) + ' mg'],
                 ['Atracurium(0.5)', (0.5 * weight).toFixed(1) + ' mg'],
                 ['Vecuronium(0.1)', (0.1 * weight).toFixed(1) + ' mg'],
@@ -470,15 +470,15 @@
             ]);
 
             addTable(cardiacContainer, 'Miscellaneous', [
-                ['Heparin(4)', (4 * weight).toFixed(1) + ' mg'],
+                ['Heparin(4)', (4 * weight).toFixed(0) + ' mg'],
                 ['Lignocaine(1.5)', (1.5 * weight).toFixed(1) + ' mg'],
-                ['EACA(100)', (100 * weight).toFixed(1) + ' mg'],
-                ['TXA(10)', (10 * weight).toFixed(1) + ' mg'],
+                ['EACA(100)', (100 * weight).toFixed(0) + ' mg'],
+                ['TXA(10)', (10 * weight).toFixed(0) + ' mg'],
                 ['Morphine(0.1)', (0.1 * weight).toFixed(1) + ' mg'],
                 ['Neostigmine(0.05)', (0.05 * weight).toFixed(2) + ' mg'],
                 ['Dexa(0.1)', (0.1 * weight).toFixed(1) + ' mg'],
-                ['Hydrocort(2)', (2 * weight).toFixed(1) + ' mg'],
-                ['Methylpred(30)', (30 * weight).toFixed(1) + ' mg']
+                ['Hydrocort(2)', (2 * weight).toFixed(0) + ' mg'],
+                ['Methylpred(30)', (30 * weight).toFixed(0) + ' mg']
             ]);
 
             const cpbHeader = document.createElement('h2');
