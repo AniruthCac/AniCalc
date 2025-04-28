@@ -117,7 +117,7 @@
             <p><strong>Adjusted Body Weight (ABW):</strong> ABW = IBW + 0.4 * (Actual Weight - IBW)</p>
             <p><strong>Weight Range, Blade, CVL, NGT, Foley, Vital Signs, ETT Size & Depth:</strong> Based on age-specific ranges from 'The Harriet Lane Handbook The Johns Hopkins Hospital'</p>
             <p><strong>LMA Size:</strong> Based on weight ranges:<br>2-5 kg: 1<br>5-12 kg: 1.5<br>10-25 kg: 2<br>25-35 kg: 2.5<br>30-60 kg: 3<br>50-90 kg: 4<br>>90 kg: 5</p>
-            <p><strong>Tidal Volume:</strong> 6 mL/kg based on Lean Body Weight</p>
+            <p><strong>Tidal Volume:</strong> 6 to 8 mL/kg based on Ideal Body Weight</p>
             <p><strong>General Anesthesia Doses:</strong><br>Propofol: 2 mg/kg (LBW)<br>Fentanyl: 2 mcg/kg (LBW)<br>Atracurium: 0.5 mg/kg (LBW)<br>Vecuronium: 0.1 mg/kg (LBW)<br>Rocuronium: 0.6 mg/kg (LBW)<br>Paracetamol: 15 mg/kg (LBW)<br>Neostigmine: 0.05 mg/kg (ABW)<br>Sugammadex: 2 mg/kg (ABW)</p>
             <p><strong>Maintenance Fluid Rate:</strong> Holliday-Segar method:<br>First 10 kg: 4 mL/kg/h<br>Next 10 kg: 2 mL/kg/h<br>Remaining kg: 1 mL/kg/h</p>
             <p><strong>Fluid Rate (1st Hour):</strong> NPO deficit: NPO hours * Maintenance Fluid Rate<br>First hour: NPO deficit / 2</p>
@@ -126,11 +126,11 @@
             <h2 class="text-xl font-semibold mt-4">Cardiac Page Calculations</h2>
             <p><strong>BMI:</strong> Weight (kg) / (Height (m))^2<br>Height (m) = Height (cm) / 100</p>
             <p><strong>BSA (Body Surface Area):</strong> Mosteller Formula: sqrt((Height (cm) * Weight (kg)) / 3600)</p>
-            <p><strong>Vaso-actives Doses:</strong><br>Infusion rate: (Weight * 3 / 40) mL/h<br>Atropine: 0.015 mg/kg<br>Glyco: 0.01 mg/kg<br>ADR: 0.01 mg/kg</p>
-            <p><strong>Induction Agents Doses:</strong><br>Propofol: 2 mg/kg<br>Ketamine: 2 mg/kg<br>Etomidate: 0.2 mg/kg<br>Thiopentone: 4 mg/kg<br>Midazolam: 0.1 mg/kg<br>Atracurium: 0.5 mg/kg<br>Vecuronium: 0.1 mg/kg<br>Rocuronium: 0.6 mg/kg</p>
+            <p><strong>Vaso-actives Doses:</strong><br>Infusion rate: (Weight * 3 / 40) mL/h<br>Atropine: 0.02 mg/kg<br>Glyco: 0.01 mg/kg<br>ADR: 0.01 mg/kg</p>
+            <p><strong>Induction Agents Doses:</strong><br>Propofol: 2 mg/kg<br>Ketamine: 2 mg/kg<br>Etomidate: 0.2 mg/kg<br>Thiopentone: 4 mg/kg<br>Midazolam: 0.05 mg/kg<br>Atracurium: 0.5 mg/kg<br>Vecuronium: 0.1 mg/kg<br>Rocuronium: 0.6 mg/kg</p>
             <p><strong>Miscellaneous Doses:</strong><br>Heparin: 4 mg/kg<br>Lignocaine: 1.5 mg/kg<br>EACA: 100 mg/kg<br>TXA: 10 mg/kg<br>Morphine: 0.1 mg/kg<br>Neostigmine: 0.05 mg/kg<br>Dexa: 0.1 mg/kg<br>Hydrocort: 2 mg/kg<br>Methylpred: 30 mg/kg</p>
             <p><strong>Cardioplegia Volume:</strong> If weight < 10 kg: 30 mL/kg<br>Else: 20 mL/kg</p>
-            <p><strong>Cardioplegia Flow Rates:</strong><br>37°C: 2.4 * BSA mL/min<br>32°C: 2.1 * BSA mL/min<br>28°C: 1.8 * BSA mL/min<br>25°C: 1.2 * BSA mL/min<br>15°C: 0.6 * BSA mL/min</p>
+            <p><strong>CPB Flow Rates:</strong><br>37°C: 2.4 * BSA L/min<br>32°C: 2.1 * BSA L/min<br>28°C: 1.8 * BSA L/min<br>25°C: 1.2 * BSA L/min<br>15°C: 0.6 * BSA L/min</p>
         </div>
         <button onclick="showSection('mainSection')" class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Back</button>
     </div>
@@ -185,8 +185,12 @@
                 return `Adjusted Body Weight: ${this.getABW().toFixed(1)} kg`;
             }
 
-            getTidalVolume() {
-                return 6 * this.getLBW();
+            getTidalVolume6() {
+                return 6 * this.getIBW();
+            }
+            
+            getTidalVolume8() {
+                return 8 * this.getIBW();
             }
 
             getMaintenanceFluidRate() {
@@ -384,7 +388,7 @@
             addResultRow(resultContainer, 'Heart Rate', data.vitalSignsHR);
             addResultRow(resultContainer, 'Blood Pressure', data.vitalSignsBP);
             addResultRow(resultContainer, 'Respiratory Rate', data.vitalSignsRR);
-            addResultRow(resultContainer, 'Tidal Volume', patient.getTidalVolume().toFixed(0) + ' mL');
+            addResultRow(resultContainer, 'Tidal Volume', patient.getTidalVolume6().toFixed(0) + ' to ' + patient.getTidalVolume8().toFixed(0) + ' mL' );
 
             addTable(resultContainer, 'General Anesthesia', [
                 ['Propofol', (2 * patient.getLBW()).toFixed(1) + ' mg'],
