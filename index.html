@@ -409,13 +409,26 @@
             addResultRow(resultContainer, 'Respiratory Rate', data.vitalSignsRR);
             addResultRow(resultContainer, 'Tidal Volume', patient.getTidalVolume());
 
+                        // Calculate Paracetamol dose
+            let paracetamolDose;
+            if (weight > 65) {
+                paracetamolDose = 1000 + ' mg';
+            } else if (age === 0 && ageMonths < 4) {
+                paracetamolDose = (7.5 * patient.getLBW()) + ' mg';
+            } else if (age === 0 && ageMonths >= 4 && ageMonths <= 11) {
+                paracetamolDose = (10 * patient.getLBW()) + ' mg';
+            } else if (age >= 1) {
+                paracetamolDose = (15 * patient.getLBW()) + ' mg';
+            } else {
+                paracetamolDose = (15 * patient.getLBW()) + ' mg'; // Default to 15 mg/kg for age > 1 year
+            }    
             addTable(resultContainer, 'General Anesthesia', [
                 ['Propofol', (2 * patient.getLBW()).toFixed(0) + ' mg'],
                 ['Fentanyl', (2 * patient.getLBW()).toFixed(0) + ' mcg'],
                 ['Atracurium', (0.5 * patient.getLBW()).toFixed(1) + ' mg'],
                 ['Vecuronium', (0.1 * patient.getLBW()).toFixed(1) + ' mg'],
                 ['Rocuronium(0.6)', (0.6 * patient.getLBW()).toFixed(1) + ' mg'],
-                ['Paracetamol', (15 * patient.getLBW()).toFixed(0) + ' mg'],
+                ['Paracetamol', paracetamolDose ],
                 ['Neostigmine', (0.05 * patient.getABW()).toFixed(2) + ' mg'],
                 ['Sugammadex(2)', (2 * patient.getABW()).toFixed(0) + ' mg']
             ]);
