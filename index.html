@@ -244,7 +244,7 @@
                  ettInfo: "Cuffed ETT: 4.0, Depth: 12 cm" },
             4: { weightRange: "4-6 yr: 20-25 kg", blade: "Mac 3", cvl: "5 Fr", ngt: "12-14 Fr", foley: "8 Fr",
                  vitalSignsHR: "HR: 70-115 bpm", vitalSignsBP: "BP: 95-110/60-75 mmHg", vitalSignsRR: "RR: 20-25 bpm",
-                 ettInfo: "Cuffed ETT: ${ patient.getEttsize() } , Depth: 15.0 cm" },
+                 ettInfo: `Cuffed ETT: ${patient.getEttSize()} , Depth: ${(patient.getEttSize() * 3).toFixed(1)} cm`,
             7: { weightRange: "7-10 yr: 25-35 kg", blade: "Mac 3", cvl: "7 Fr", ngt: "12-14 Fr", foley: "8 Fr",
                  vitalSignsHR: "HR: 60-100 bpm", vitalSignsBP: "BP: 100-120/60-75 mmHg", vitalSignsRR: "RR: 14-22 bpm",
                  ettInfo: "Cuffed ETT: 5.5, Depth: 16.5 cm" },
