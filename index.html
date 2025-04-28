@@ -193,6 +193,9 @@
                 return 8 * this.getIBW();
             }
 
+            getEttSize() {
+                return ( Math.floor ( this.age() / 2) / 2) + 3.5;
+            }
             getMaintenanceFluidRate() {
                 let rate = 0;
                 if (this.weight <= 10) rate = 4 * this.weight;
@@ -235,13 +238,13 @@
                   ettInfo: "Cuffed ETT: 4.0, Depth: 12.0 cm" },
             1: { weightRange: "1 yr: 10 kg", blade: "Miller 1, Mac 2", cvl: "4-5 Fr", ngt: "10 Fr", foley: "8 Fr",
                  vitalSignsHR: "HR: 80-125 bpm", vitalSignsBP: "BP: 90-105/55-70 mmHg", vitalSignsRR: "RR: 20-30 bpm",
-                 ettInfo: "Cuffed ETT: 4.0, Depth: 12.0 cm" },
+                 ettInfo: "Cuffed ETT: 3.5, Depth: 10.0 cm" },
             2: { weightRange: "2-3 yr: 13-16 kg", blade: "Miller 1, Mac 2", cvl: "5 Fr", ngt: "10-12 Fr", foley: "8 Fr",
                  vitalSignsHR: "HR: 80-125 bpm", vitalSignsBP: "BP: 90-105/55-70 mmHg", vitalSignsRR: "RR: 20-30 bpm",
-                 ettInfo: "Cuffed ETT: 4.5, Depth: 13.5 cm" },
+                 ettInfo: "Cuffed ETT: 4.0, Depth: 12 cm" },
             4: { weightRange: "4-6 yr: 20-25 kg", blade: "Mac 3", cvl: "5 Fr", ngt: "12-14 Fr", foley: "8 Fr",
                  vitalSignsHR: "HR: 70-115 bpm", vitalSignsBP: "BP: 95-110/60-75 mmHg", vitalSignsRR: "RR: 20-25 bpm",
-                 ettInfo: "Cuffed ETT: 5.0, Depth: 15.0 cm" },
+                 ettInfo: "Cuffed ETT: ${ patient.getEttsize() } , Depth: 15.0 cm" },
             7: { weightRange: "7-10 yr: 25-35 kg", blade: "Mac 3", cvl: "7 Fr", ngt: "12-14 Fr", foley: "8 Fr",
                  vitalSignsHR: "HR: 60-100 bpm", vitalSignsBP: "BP: 100-120/60-75 mmHg", vitalSignsRR: "RR: 14-22 bpm",
                  ettInfo: "Cuffed ETT: 5.5, Depth: 16.5 cm" },
