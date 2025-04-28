@@ -193,9 +193,6 @@
                 return 8 * this.getIBW();
             }
 
-            getEttSize() {
-                return ( Math.floor ( this.age() / 2) / 2) + 3.5;
-            }
             getMaintenanceFluidRate() {
                 let rate = 0;
                 if (this.weight <= 10) rate = 4 * this.weight;
